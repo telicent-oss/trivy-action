@@ -82,7 +82,7 @@ jobs:
 
       - name: Maven Build to generate SBOMs
         run: |
-          mvn clean install --batch-mode -DskipTests -Dgpg.skip=true
+          mvn clean install -q -DskipTests -Dgpg.skip=true
 
       - name: Detect Maven Version
         run: |
