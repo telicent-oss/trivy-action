@@ -19,7 +19,6 @@ jobs:
         
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        continue-on-error: true
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
