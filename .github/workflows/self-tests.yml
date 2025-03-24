@@ -65,3 +65,20 @@ jobs:
           scan-ref: .
           scan-name: telicent-smart-caches-core
           uses-java: true
+
+  unsupported-scan-type:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unsupported Trivy Scan type
+        id: trivy-scan
+        uses: telicent-oss/trivy-action@v1
+        continue-on-error: true
+        with:
+          scan-type: foo
+          scan-ref: .
+          scan-name: unsupported
+
+      - name: Fail if Trivy didn't fail
+        if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
+        run: |
+          exit 1
