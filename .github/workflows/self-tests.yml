@@ -25,6 +25,7 @@ jobs:
           scan-type: image
           scan-ref: telicent/telicent-access-api:1.4.2
           scan-name: telicent-access-api
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fail if Trivy didn't fail
         if: ${{ steps.trivy-scan.outcome != 'failed' }}

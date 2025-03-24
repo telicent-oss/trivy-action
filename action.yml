@@ -20,6 +20,11 @@ inputs:
     description: |
       Specifies the kind of Trivy scan to perform, one of `image`, `fs` or `sbom`.  Other
       values are not currently supported and will cause the action to fail.
+  gh-token:
+    required: true
+    description: |
+      A GitHub Token needed to determine the current Trivy database version for caching.
+      In most cases passing `secrets.GITHUB_TOKEN` from the calling workflow is sufficient here.
   uses-java:
     required: false
     default: "false"
@@ -67,7 +72,7 @@ runs:
       id: trivy-cache
       uses: yogeshlonkar/trivy-cache-action@13349295ee133b955ae40a348f14c0290dd5c2b6
       with:
-        gh-token: ${{ secrets.GITHUB_TOKEN }}
+        gh-token: ${{ inputs.gh-token }}
         prefix: ${{ github.workflow }}
 
     - name: Download Trivy Java DB
