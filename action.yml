@@ -155,7 +155,7 @@ runs:
       with:
         scan-type: ${{ inputs.scan-type }}
         format: table
-        output: ${{ env.GITHUB_STEP_SUMMARY }}
+        output: ${{ inputs.scan-name }}-trivy-gating-report.txt
         scan-ref: ${{ inputs.scan-ref }}
         severity: HIGH,CRITICAL
         ignore-unfixed: ${{ inputs.allow-unfixed }}
@@ -166,6 +166,12 @@ runs:
         # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less 
         # flexible way
         cache: false
+
+    - name: Display Gating Vulnerabilities in Job Summary
+      if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
+      shell: sh
+      run: |
+        cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Add Error to Build if Scan Failed
       if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
