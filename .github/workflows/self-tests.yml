@@ -48,3 +48,20 @@ jobs:
         if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
         run: |
           exit 1
+
+  filesystem-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/smart-caches-core
+
+      - name: Trivy Filesystem Scan
+        id: trivy-scan
+        uses: telicent-oss/trivy-action@v1
+        with:
+          scan-type: fs
+          scan-ref: .
+          scan-name: telicent-smart-caches-core
+          uses-java: true
