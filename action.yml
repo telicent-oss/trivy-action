@@ -144,6 +144,16 @@ runs:
         echo "scan-results-file=${{ inputs.scan-name }}-trivy-report.json" >> $GITHUB_OUTPUT
         echo "scan-results-url=${{ steps.upload-scan-results.outputs.artifact-url }}" >> $GITHUB_OUTPUT
 
+    - name: Get Report template
+      uses: actions/checkout@v4
+      with:
+        repository: telicent-oss/trivy-action
+        ref: self-tests # TODO Set to main once the current PR is finished
+        sparse-checkout: |
+          report-template.tpl
+        sparse-checkout-cone-mode: false
+        path: .trivy-templates/
+
     - name: Fail build on High/Criticial Vulnerabilities
       id: gating-scan
       #uses: aquasecurity/trivy-action@0.30.0
@@ -153,7 +163,8 @@ runs:
         TRIVY_SKIP_JAVA_DB_UPDATE: true
       with:
         scan-type: ${{ inputs.scan-type }}
-        format: table
+        format: template
+        template: "@.trivy-templates/report-template.tpl"
         output: ${{ inputs.scan-name }}-trivy-gating-report.txt
         scan-ref: ${{ inputs.scan-ref }}
         severity: HIGH,CRITICAL
@@ -177,3 +188,9 @@ runs:
       shell: sh
       run: |
         echo "::error title=High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities, please review the report and apply relevant fixes"
+
+    - name: Cleanup templates/
+      if: ${{ always() }}
+      shell: sh
+      run: |
+        rm -Rf .trivy-templates/
