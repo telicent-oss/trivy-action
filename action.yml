@@ -51,7 +51,7 @@ runs:
   using: "composite"
   steps:
     - name: Fail on Unsupported Scan Type
-      if: ${{ !contains([ 'image', 'fs', 'sbom'], inputs.scan-type )}}
+      if: ${{ inputs.scan-type != 'image' && inputs.scan-type != 'fs' && inputs.scan-type != 'sbom' }}
       shell: sh
       run: |
         echo "::error title=Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
