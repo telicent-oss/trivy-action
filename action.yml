@@ -116,7 +116,7 @@ runs:
         scan-type: ${{ inputs.scan-type }}
         output: ${{ inputs.scan-name }}-trivy-report.json
         format: json
-        scan-ref: .
+        scan-ref: ${{ inputs.scan-ref }}
         exit-code: 0
         cache-dir: .trivy
         # We've explicitly called aquasecurity/setup-trivy already, no need for the trivy-action to do this for us
