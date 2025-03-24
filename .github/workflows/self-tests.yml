@@ -66,6 +66,37 @@ jobs:
           scan-name: telicent-smart-caches-core
           uses-java: true
 
+  sbom-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/smart-caches-core
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Maven Build to generate SBOMs
+        run: |
+          mvn clean install --batch-mode -DskipTests -Dgpg.skip=true
+
+      - name: Detect Maven Version
+        run: |
+          echo "PROJECT_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_ENV
+
+      - name: Trivy SBOM Scan
+        id: trivy-scan
+        uses: telicent-oss/trivy-action@v1
+        with:
+          scan-type: sbom
+          scan-ref: cli/cli-debug/target/cli-debug-${{ env.PROJECT_VERSION }}-bom.json
+          scan-name: telicent-cli-debug
+          uses-java: true
+
   unsupported-scan-type:
     runs-on: ubuntu-latest
     steps:
