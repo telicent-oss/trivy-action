@@ -63,7 +63,7 @@ runs:
         exit 1
 
     - name: Setup Trivy
-      uses: aquasecurity/setup-trivy@master
+      uses: aquasecurity/setup-trivy@v0.2.2
       with:
         version: v0.60.0
         cache: true
