@@ -181,10 +181,12 @@ runs:
 
     - name: Display Gating Vulnerabilities in Job Summary (if any)
       if: ${{ always() }}
-      shell: sh
+      shell: bash
       run: |
-        echo "# Trivy `${{ inputs.scan-type }}` scan on ` ${{inputs.scan-ref }}`" >> "$GITHUB_STEP_SUMMARY"
-        cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
+        if [ -f "${{ inputs.scan-name }}-trivy-gating-report.txt" ]; then
+          echo "# Trivy `${{ inputs.scan-type }}` scan on ` ${{inputs.scan-ref }}`" >> "$GITHUB_STEP_SUMMARY"
+          cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
+        fi
 
     - name: Add Error to Build if Scan Failed
       if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
