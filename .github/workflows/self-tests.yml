@@ -24,7 +24,7 @@ jobs:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.6
           scan-name: telicent-java21
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          uses-java: true
 
   failing-image-scan:
     runs-on: ubuntu-latest
@@ -43,7 +43,6 @@ jobs:
           scan-type: image
           scan-ref: telicent/telicent-access-api:1.4.2
           scan-name: telicent-access-api
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fail if Trivy didn't fail
         if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
