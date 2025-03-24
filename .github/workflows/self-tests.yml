@@ -28,6 +28,6 @@ jobs:
           gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fail if Trivy didn't fail
-        if: ${{ steps.trivy-scan.outcome != 'failed' }}
+        if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
         run: |
           exit 1
