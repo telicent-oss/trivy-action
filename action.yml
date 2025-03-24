@@ -179,8 +179,8 @@ runs:
         # flexible way
         cache: false
 
-    - name: Display Gating Vulnerabilities in Job Summary
-      if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
+    - name: Display Gating Vulnerabilities in Job Summary (if any)
+      if: ${{ always() }}
       shell: sh
       run: |
         cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
