@@ -20,13 +20,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Sanitise Image Reference
+        id: image-name
+        run: |
+          echo "sanitised=$(echo '${{ matrix.image }}' | sed 's/:/-/g')" >> $GITHUB_OUTPUT
+
       - name: Trivy Image Scan that Passes
         id: trivy-scan
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: ${{ matrix.image }}
-          scan-name: matrix-${{ matrix.image }}
+          scan-name: matrix-${{ steps.image-name.outputs.sanitised }}
           uses-java: true
 
   good-image-scan:
