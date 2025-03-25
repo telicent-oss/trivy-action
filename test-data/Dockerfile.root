@@ -1,0 +1,5 @@
+FROM alpine:latest
+
+# Misconfiguration - No USER directive so runs as root by default!
+
+ENTRYPOINT [ "/bin/sh" ]

@@ -14,12 +14,23 @@ inputs:
     required: true
     description: |
       A unique name for the scan to disambiguate the Job Artifacts it creates from 
-      others created by the same workflow
+      others created by the same workflow.
+
+      Note that the given `scan-name` value will be sanitised to remove characters that are 
+      not permitted by the actions that consume this value.  You can find the actual names
+      used for the report files and artifacts in the action output.
   scan-type:
     required: true
     description: |
       Specifies the kind of Trivy scan to perform, one of `image`, `fs` or `sbom`.  Other
       values are not currently supported and will cause the action to fail.
+  gh-token:
+    required: false
+    default: ${{ github.token }}
+    description: |
+      A GitHub Token needed to determine the current Trivy database version for caching.
+      Defaults to github.token which is the token for this build, can be overridden if this default token doesn't work
+      for your build environment.
   uses-java:
     required: false
     default: "false"
@@ -51,14 +62,35 @@ runs:
   using: "composite"
   steps:
     - name: Fail on Unsupported Scan Type
-      if: ${{ !contains([ 'image', 'fs', 'sbom'], inputs.scan-type )}}
+      # NB - Can't have an array literal directly in an Actions expression, but can use fromJSON() function 
+      #      to parse an array literal on the fly, go figure!
+      #      See https://github.com/orgs/community/discussions/27223
+      if: ${{ !contains(fromJSON('[ "image", "fs", "sbom", "config" ]'), inputs.scan-type) }}
       shell: sh
       run: |
-        echo "::error title=Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
+        echo "::error title=${{ github.job }} - Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
         exit 1
 
+    # As we're going to use the scan name for both output file names and GitHub Actions Artifacts have to sanitise it
+    # to remove characters that are disallowed, or would cause those usages to break
+    #
+    # For GitHub Actions Artifacts this is as follows:
+    # 
+    # Double quote ", Colon :, Less than <, Greater than >, Vertical bar |, Asterisk *, Question mark ?, Carriage 
+    # return \r, Line feed \n, Backslash \, Forward slash /
+    #
+    # These characters are not allowed in the artifact name due to limitations with certain file systems such as NTFS. 
+    # To maintain file system agnostic behavior, these characters are intentionally not allowed to prevent potential 
+    # problems with downloads on different file systems.
+
+    - name: Sanitise Scan name
+      id: sanitised
+      shell: bash
+      run: |
+        echo "name=$(echo '${{ inputs.scan-name }}' | sed 's/[:/<>|*?\]/-/g' | tr -s '-')" >> $GITHUB_OUTPUT
+
     - name: Setup Trivy
-      uses: aquasecurity/setup-trivy@master
+      uses: aquasecurity/setup-trivy@v0.2.2
       with:
         version: v0.60.0
         cache: true
@@ -67,12 +99,13 @@ runs:
       id: trivy-cache
       uses: yogeshlonkar/trivy-cache-action@13349295ee133b955ae40a348f14c0290dd5c2b6
       with:
-        gh-token: ${{ secrets.GITHUB_TOKEN }}
-        prefix: ${{ github.workflow }}
+        gh-token: ${{ inputs.gh-token }}
+        prefix: ${{ github.workflow }}-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}
 
     - name: Download Trivy Java DB
       if: ${{ inputs.uses-java == 'true' && (steps.trivy-cache.outputs.cache-hit == '' || steps.trivy-cache.outputs.cache-hit == 'false') }}
-      uses: aquasecurity/trivy-action@master
+      #uses: aquasecurity/trivy-action@0.30.0
+      uses: rvesse/trivy-action@fix/overwrite-envs
       env:
         TRIVY_DOWNLOAD_JAVA_DB_ONLY: true
         TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db,ghcr.io/aquasecurity/trivy-java-db:1
@@ -88,7 +121,8 @@ runs:
 
     - name: Download Trivy Vulnerability DB
       if: ${{ steps.trivy-cache.outputs.cache-hit == '' || steps.trivy-cache.outputs.cache-hit == 'false' }}
-      uses: aquasecurity/trivy-action@master
+      #uses: aquasecurity/trivy-action@0.30.0
+      uses: rvesse/trivy-action@fix/overwrite-envs
       env:
         TRIVY_DOWNLOAD_DB_ONLY: true
         TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db:2
@@ -103,15 +137,16 @@ runs:
         cache: false
 
     - name: Trivy Vulnerability Scan
-      uses: aquasecurity/trivy-action@master
+      #uses: aquasecurity/trivy-action@0.30.0
+      uses: rvesse/trivy-action@fix/overwrite-envs
       env:
         TRIVY_SKIP_DB_UPDATE: true
         TRIVY_SKIP_JAVA_DB_UPDATE: true
       with:
         scan-type: ${{ inputs.scan-type }}
-        output: ${{ inputs.scan-name }}-trivy-report.json
+        output: ${{ steps.sanitised.outputs.name }}-trivy-report.json
         format: json
-        scan-ref: .
+        scan-ref: ${{ inputs.scan-ref }}
         exit-code: 0
         cache-dir: .trivy
         # We've explicitly called aquasecurity/setup-trivy already, no need for the trivy-action to do this for us
@@ -120,37 +155,44 @@ runs:
         # flexible way
         cache: false
 
-    - name: Add Trivy Scan Results to Job Summary
-      shell: bash
-      run: |
-        cat "${{ inputs.scan-name }}-trivy-report.json" >> $GITHUB_STEP_SUMMARY
-
     - name: Upload Vulnerability Scan Results
       id: upload-scan-results
       uses: actions/upload-artifact@v4.4.3
       with:
-        name: ${{ inputs.scan-name }}-trivy-report
-        path: ${{ inputs.scan-name }}-trivy-report.json
+        name: ${{ steps.sanitised.outputs.name }}-trivy-report
+        path: ${{ steps.sanitised.outputs.name }}-trivy-report.json
         retention-days: 30
 
     - name: Register Scan Results as Action Output
       shell: sh
       id: generate-outputs
       run: |
-        echo "scan-results=${{ inputs.scan-name }}-trivy-report" >> $GITHUB_OUTPUT
-        echo "scan-results-file=${{ inputs.scan-name }}-trivy-report.json" >> $GITHUB_OUTPUT
+        echo "scan-results=${{ steps.sanitised.outputs.name }}-trivy-report" >> $GITHUB_OUTPUT
+        echo "scan-results-file=${{ steps.sanitised.outputs.name }}-trivy-report.json" >> $GITHUB_OUTPUT
         echo "scan-results-url=${{ steps.upload-scan-results.outputs.artifact-url }}" >> $GITHUB_OUTPUT
+
+    - name: Get Report template
+      uses: actions/checkout@v4
+      with:
+        repository: telicent-oss/trivy-action
+        ref: self-tests # TODO Set to main once the current PR is finished
+        sparse-checkout: |
+          report-template.tpl
+        sparse-checkout-cone-mode: false
+        path: .trivy-templates/
 
     - name: Fail build on High/Criticial Vulnerabilities
       id: gating-scan
-      uses: aquasecurity/trivy-action@master
+      #uses: aquasecurity/trivy-action@0.30.0
+      uses: rvesse/trivy-action@fix/overwrite-envs
       env:
         TRIVY_SKIP_DB_UPDATE: true
         TRIVY_SKIP_JAVA_DB_UPDATE: true
       with:
         scan-type: ${{ inputs.scan-type }}
-        format: table
-        output: ${{ env.GITHUB_STEP_SUMMARY }}
+        format: template
+        template: "@.trivy-templates/report-template.tpl"
+        output: ${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt
         scan-ref: ${{ inputs.scan-ref }}
         severity: HIGH,CRITICAL
         ignore-unfixed: ${{ inputs.allow-unfixed }}
@@ -162,8 +204,23 @@ runs:
         # flexible way
         cache: false
 
+    - name: Display Gating Vulnerabilities in Job Summary (if any)
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        if [ -f "${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt" ]; then
+          echo "# Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
+          cat "${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
+        fi
+
     - name: Add Error to Build if Scan Failed
       if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
       shell: sh
       run: |
-        echo "::error title=High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities, please review the report and apply relevant fixes"
+        echo "::error title=${{ github.job }} - High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities scanning ${{ inputs.scan-ref }}, please review the report and apply relevant fixes.  Report is attached as build artifact ${{ steps.sanitised.outputs.name }}-trivy-report and rendered as a human readable job summary."
+
+    - name: Cleanup templates/
+      if: ${{ always() }}
+      shell: sh
+      run: |
+        rm -Rf .trivy-templates/
