@@ -14,7 +14,11 @@ inputs:
     required: true
     description: |
       A unique name for the scan to disambiguate the Job Artifacts it creates from 
-      others created by the same workflow
+      others created by the same workflow.
+
+      Note that the given `scan-name` value will be sanitised to remove characters that are 
+      not permitted by the actions that consume this value.  You can find the actual names
+      used for the report files and artifacts in the action output.
   scan-type:
     required: true
     description: |
@@ -63,6 +67,24 @@ runs:
       run: |
         echo "::error title=${{ github.job }} - Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
         exit 1
+
+    # As we're going to use the scan name for both output file names and GitHub Actions Artifacts have to sanitise it
+    # to remove characters that are disallowed, or would cause those usages to break
+    #
+    # For GitHub Actions Artifacts this is as follows:
+    # 
+    # Double quote ", Colon :, Less than <, Greater than >, Vertical bar |, Asterisk *, Question mark ?, Carriage 
+    # return \r, Line feed \n, Backslash \, Forward slash /
+    #
+    # These characters are not allowed in the artifact name due to limitations with certain file systems such as NTFS. 
+    # To maintain file system agnostic behavior, these characters are intentionally not allowed to prevent potential 
+    # problems with downloads on different file systems.
+
+    - name: Sanitise Scan name
+      id: sanitised
+      shell: bash
+      run: |
+        echo "name=$(echo '${{ inputs.scan-name }}' | sed 's/[:/<>|*?\]/-/g' | tr -s '-')" >> $GITHUB_OUTPUT
 
     - name: Setup Trivy
       uses: aquasecurity/setup-trivy@v0.2.2
@@ -119,7 +141,7 @@ runs:
         TRIVY_SKIP_JAVA_DB_UPDATE: true
       with:
         scan-type: ${{ inputs.scan-type }}
-        output: ${{ inputs.scan-name }}-trivy-report.json
+        output: ${{ steps.sanitised.outputs.name }}-trivy-report.json
         format: json
         scan-ref: ${{ inputs.scan-ref }}
         exit-code: 0
@@ -134,16 +156,16 @@ runs:
       id: upload-scan-results
       uses: actions/upload-artifact@v4.4.3
       with:
-        name: ${{ inputs.scan-name }}-trivy-report
-        path: ${{ inputs.scan-name }}-trivy-report.json
+        name: ${{ steps.sanitised.outputs.name }}-trivy-report
+        path: ${{ steps.sanitised.outputs.name }}-trivy-report.json
         retention-days: 30
 
     - name: Register Scan Results as Action Output
       shell: sh
       id: generate-outputs
       run: |
-        echo "scan-results=${{ inputs.scan-name }}-trivy-report" >> $GITHUB_OUTPUT
-        echo "scan-results-file=${{ inputs.scan-name }}-trivy-report.json" >> $GITHUB_OUTPUT
+        echo "scan-results=${{ steps.sanitised.outputs.name }}-trivy-report" >> $GITHUB_OUTPUT
+        echo "scan-results-file=${{ steps.sanitised.outputs.name }}-trivy-report.json" >> $GITHUB_OUTPUT
         echo "scan-results-url=${{ steps.upload-scan-results.outputs.artifact-url }}" >> $GITHUB_OUTPUT
 
     - name: Get Report template
@@ -167,7 +189,7 @@ runs:
         scan-type: ${{ inputs.scan-type }}
         format: template
         template: "@.trivy-templates/report-template.tpl"
-        output: ${{ inputs.scan-name }}-trivy-gating-report.txt
+        output: ${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt
         scan-ref: ${{ inputs.scan-ref }}
         severity: HIGH,CRITICAL
         ignore-unfixed: ${{ inputs.allow-unfixed }}
@@ -183,16 +205,16 @@ runs:
       if: ${{ always() }}
       shell: bash
       run: |
-        if [ -f "${{ inputs.scan-name }}-trivy-gating-report.txt" ]; then
+        if [ -f "${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt" ]; then
           echo "# \`${{ github.job }}\`: Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
-          cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
+          cat "${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
         fi
 
     - name: Add Error to Build if Scan Failed
       if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
       shell: sh
       run: |
-        echo "::error title=${{ github.job }} - High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities scanning ${{ inputs.scan-ref }}, please review the report and apply relevant fixes.  Report is attached as build artifact ${{ inputs.scan-name }}-trivy-report and rendered as a human readable job summary."
+        echo "::error title=${{ github.job }} - High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities scanning ${{ inputs.scan-ref }}, please review the report and apply relevant fixes.  Report is attached as build artifact ${{ steps.sanitised.outputs.name }}-trivy-report and rendered as a human readable job summary."
 
     - name: Cleanup templates/
       if: ${{ always() }}
