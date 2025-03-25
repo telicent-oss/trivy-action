@@ -64,7 +64,8 @@ runs:
     - name: Fail on Unsupported Scan Type
       # NB - Can't have an array literal directly in an Actions expression, but can use fromJSON() function 
       #      to parse an array literal on the fly, go figure!
-      if: ${{ !contains(fromJSON("[ 'image', 'fs', 'sbom', 'config' ]"), inputs.scan-type) }}
+      #      See https://github.com/orgs/community/discussions/27223
+      if: ${{ !contains(fromJSON('[ "image", "fs", "sbom", "config" ]'), inputs.scan-type) }}
       shell: sh
       run: |
         echo "::error title=${{ github.job }} - Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
