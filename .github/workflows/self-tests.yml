@@ -166,6 +166,6 @@ jobs:
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: config
-          scan-name: docker-misconfiguration
+          scan-name: docker-configuration
           scan-ref: test-data/Dockerfile.good
 
