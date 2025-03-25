@@ -142,8 +142,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Misconfiguration Scan
+        id: trivy-scan
         uses: telicent-oss/trivy-action@v1
+        continue-on-error: true
         with:
           scan-type: config
           scan-name: docker-misconfiguration
           scan-ref: test-data/Dockerfile.root
+
+      - name: Fail if Trivy didn't fail
+        if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
+        run: |
+          exit 1
