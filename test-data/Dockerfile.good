@@ -1,0 +1,5 @@
+FROM alpine:latest
+
+USER 1234
+
+ENTRYPOINT [ "/bin/sh" ]
