@@ -184,7 +184,7 @@ runs:
       shell: bash
       run: |
         if [ -f "${{ inputs.scan-name }}-trivy-gating-report.txt" ]; then
-          echo "# \`${{ github.job }}\` Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "# \`${{ github.job }}\`: Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
           cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
         fi
 
