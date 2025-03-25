@@ -61,7 +61,7 @@ runs:
       if: ${{ inputs.scan-type != 'image' && inputs.scan-type != 'fs' && inputs.scan-type != 'sbom' }}
       shell: sh
       run: |
-        echo "::error title=Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
+        echo "::error title=${{ github.job }} - Unsupported Scan Type::Received Scan Type '${{ inputs.scan-type}}' which is not supported"
         exit 1
 
     - name: Setup Trivy
@@ -184,7 +184,7 @@ runs:
       shell: bash
       run: |
         if [ -f "${{ inputs.scan-name }}-trivy-gating-report.txt" ]; then
-          echo "# Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "# \`${{ github.job }}\` Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
           cat "${{ inputs.scan-name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
         fi
 
@@ -192,7 +192,7 @@ runs:
       if: ${{ failure() && steps.gating-scan.outcome == 'failure' }}
       shell: sh
       run: |
-        echo "::error title=High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities scanning ${{ inputs.scan-ref }}, please review the report and apply relevant fixes.  Report is attached as build artifact ${{ inputs.scan-name }}-trivy-report and rendered as a human readable job summary."
+        echo "::error title=${{ github.job }} - High/Critical Vulnerabilities Found::Trivy detected HIGH/CRITICAL vulnerabilities scanning ${{ inputs.scan-ref }}, please review the report and apply relevant fixes.  Report is attached as build artifact ${{ inputs.scan-name }}-trivy-report and rendered as a human readable job summary."
 
     - name: Cleanup templates/
       if: ${{ always() }}
