@@ -206,7 +206,7 @@ runs:
       shell: bash
       run: |
         if [ -f "${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt" ]; then
-          echo "# \`${{ github.job }}\`: Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "# Trivy \`${{ inputs.scan-type }}\` scan on \` ${{inputs.scan-ref }}\`" >> "$GITHUB_STEP_SUMMARY"
           cat "${{ steps.sanitised.outputs.name }}-trivy-gating-report.txt" >> "$GITHUB_STEP_SUMMARY"
         fi
 
