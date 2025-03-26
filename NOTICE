@@ -1,0 +1,7 @@
+Telicent Trivy Action
+=====================
+
+A composite GitHub Action for encapsulating Telicent's workflow around usage of the
+AquaSecurity Trivy Action
+
+Copyright (C) 2025 Telicent Ltd.
