@@ -175,7 +175,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: telicent-oss/trivy-action
-        ref: self-tests # TODO Set to main once the current PR is finished
+        ref: main
         sparse-checkout: |
           report-template.tpl
         sparse-checkout-cone-mode: false
