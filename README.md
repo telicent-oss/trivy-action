@@ -51,20 +51,20 @@ In the above example we invoke the action twice, once to do a `fs` scan and anot
 
 | Input | Required? | Default | Purpose |
 |-------|-----------|---------|---------|
-| `scan-type` | Yes | N/A | Specifies the kind of Trivy scan to run, one of `fs`, `image` or `sbom` |
-| `scan-ref` | Yes | N/A | Specifies what to scan, for `scan-type` of `fs`/`sbom` this is a file system path, for `image` this is a reference to a container image |
+| `scan-type` | Yes | N/A | Specifies the kind of Trivy scan to run, one of `fs`, `image`, `config` or `sbom` |
+| `scan-ref` | Yes | N/A | Specifies what to scan, for `scan-type` of `fs`/`sbom` this is a file system path, for `image` this is a reference to a container image, for `config` this is a reference to a Dockerfile |
 | `scan-name` | Yes | N/A | A unique name (within the calling workflow) for this scan used to disambiguate the scan artifacts when they are attached as artifacts to the build. |
 | `uses-java` | No | `false` | If your scans involve Java code, whether for `fs` or `image` scans, then set this to `true` to ensure the Trivy Java DB is additionally downloaded and cached |
 | `allow-unfixed` | No | `false` | Sets the `ignore-unfixed` input passed on to the [`aquasecurity/trivy-action`][1] that controls whether unfixed HIGH/CRITICAL severity vulnerabilities fail the build. |
+| `gh-token` | No | `github.token` | Sets the GitHub token used to authenticate to GitHub to fetch Trivy release metadata to determine whether the cache needs updating. |
 
 # Outputs
 
 | Output | Description |
 |--------|-------------|
-| `scan-results` | Name of a GitHub Actions artifact that has been uploaded and contains the full SARIF JSON results. |
-| `scan-results-file` | Name of the SARIF JSON file within the uploaded GitHub Actions artifact. |
+| `scan-results` | Name of a GitHub Actions artifact that has been uploaded and contains the full Trivy JSON results. |
+| `scan-results-file` | Name of the Trivy JSON file within the uploaded GitHub Actions artifact. |
 | `scan-results-url` | Full URL to the uploaded artifact. |
-
 
 [1]: https://github.com/aquasecurity/trivy-action
 [2]: https://github.com/aquasecurity/setup-trivy
