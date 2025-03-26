@@ -66,6 +66,10 @@ In the above example we invoke the action twice, once to do a `fs` scan and anot
 | `scan-results-file` | Name of the Trivy JSON file within the uploaded GitHub Actions artifact. |
 | `scan-results-url` | Full URL to the uploaded artifact. |
 
+# License
+
+This Action is licensed under the Apache License 2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE) for more information.
+
 [1]: https://github.com/aquasecurity/trivy-action
 [2]: https://github.com/aquasecurity/setup-trivy
 [3]: https://github.com/yogeshlonkar/trivy-cache-action
