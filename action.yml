@@ -176,8 +176,8 @@ runs:
           # Note the exit 0 to force us to continue even if we get a bad repository reference/branch
           # In this case we'll hit the else branch and issue a Warning
           echo "Retrieving Remote VEX statements from ${BRANCH} branch of ${REPO}"
-          git remote add -f origin https://github.com/${REPO} || exit 0
-          git checkout --force ${BRANCH} || exit 0
+          git remote add -f origin https://github.com/${REPO} || echo "Failed to fetch remote repository ${REPO}"
+          git checkout --force ${BRANCH} || echo "Failed to checkout branch ${BRANCH} from remote repository ${REPO}"
           if [ -d ".vex/" ]; then
             mv -fv .vex/*.json .
             rm -Rf .vex/
