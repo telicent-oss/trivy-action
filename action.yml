@@ -220,8 +220,10 @@ runs:
         fi
 
         # Export the TRIVY_VEX environment variable if we have VEX statements available
+        # We also rename the file at this point to be more descriptive
         if [ -f merged.openvex.json ]; then
-          echo "TRIVY_VEX=merged.openvex.json" >> $GITHUB_ENV
+          mv merged.openvex.json ${{ steps.sanitised.outputs.name }}-merged.openvex.json
+          echo "TRIVY_VEX=${{ steps.sanitised.outputs.name }}-merged.openvex.json" >> $GITHUB_ENV
           echo "prepared=true" >> $GITHUB_OUTPUT
         else
           echo "prepared=false" >> $GITHUB_OUTPUT
@@ -232,7 +234,7 @@ runs:
       uses: actions/upload-artifact@v4.4.3
       with:
         name: ${{ steps.sanitised.outputs.name }}-merged-vex-statements
-        path: merged.openvex.json
+        path: ${{ steps.sanitised.outputs.name }}-merged.openvex.json
         retention-days: 30
 
     # Perform a full vulnerability to generate a full vulnerability report
@@ -281,7 +283,9 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: telicent-oss/trivy-action
-        ref: main
+        # Temporarily changed to test updated report template
+        ref: TELDEVOPS-589
+        #ref: main
         sparse-checkout: |
           report-template.tpl
         sparse-checkout-cone-mode: false
@@ -294,6 +298,7 @@ runs:
       env:
         TRIVY_SKIP_DB_UPDATE: true
         TRIVY_SKIP_JAVA_DB_UPDATE: true
+        TRIVY_SHOW_SUPPRESSED: true
       with:
         scan-type: ${{ inputs.scan-type }}
         format: template
@@ -330,7 +335,7 @@ runs:
       if: ${{ always() }}
       shell: sh
       run: |
-        rm -f .merged.*
+        rm -f ${{ steps.sanitised.outputs.name }}-merged.openvex.json
         rm -Rf .remote-vex/
 
     - name: Cleanup templates/

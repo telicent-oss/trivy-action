@@ -24,6 +24,29 @@
     {{- end }}
 </table>
 {{- end }}
+{{- if (eq (len .ModifiedFindings ) 0) }}
+<h4>No Suppressed Vulnerabilities found</h4>
+{{- else }}
+<h4>Suppressed Vulnerabilities</h4>
+<table>
+    <tr>
+        <th>Package</th>
+        <th>ID</th>
+        <th>Severity</th>
+        <th>Installed Version</th>
+        <th>Suppression Status</th>
+    </tr>
+    {{- range .ModifiedFindings }}
+    <tr>
+        <td><code>{{ escapeXML .Finding.PkgName }}</code></td>
+        <td>{{ escapeXML .Finding.VulnerabilityID }}</td>
+        <td>{{ escapeXML .Finding.Severity }}</td>
+        <td>{{ escapeXML .Finding.InstalledVersion }}</td>
+        <td>{{ .Status }} ({{ .Source }})</td>
+    </tr>
+    {{- end }}
+</table>
+{{- end }}
 {{- if (eq (len .Misconfigurations ) 0) }}
 <h4>No Misconfigurations found</h4>
 {{- else }}
