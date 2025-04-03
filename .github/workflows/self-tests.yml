@@ -8,17 +8,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  matrix-scan:
+  cache-images:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.6", "alpine:latest" ]
+        image: [ "telicent/telicent-java21:1.2.6", "telicent/telicent-access-api:1.4.2" ]
+      fail-fast: true
     steps:
+      - name: Cache Images
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: ${{ matrix.image }}
+          restore-only: false
+
+  matrix-scan:
+    runs-on: ubuntu-latest
+    needs: cache-images
+    strategy:
+      matrix:
+        image: [ "telicent/telicent-java21:1.2.6", "alpine:latest" ]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Restore Cached Image
+        if: ${{ !contains(matrix.image, ':latest') }}
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: ${{ matrix.image }}
+          restore-only: true
 
       - name: Trivy Image Scan that Passes
         id: trivy-scan
@@ -31,12 +56,23 @@ jobs:
 
   good-image-scan:
     runs-on: ubuntu-latest
+    needs: cache-images
     steps:
+      # Need to checkout as we need the VEX statements for the scan to pass!
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Restore Cached Image
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: telicent/telicent-java21:1.2.6
+          restore-only: true
         
       - name: Trivy Image Scan that Passes
         id: trivy-scan
@@ -47,14 +83,52 @@ jobs:
           scan-name: telicent-java21
           uses-java: true
 
+  remote-vex-scan:
+    needs: cache-images
+    runs-on: ubuntu-latest
+    steps:
+      # Intentionally not checking out, relying on remote-vex support
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Restore Cached Image
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: telicent/telicent-java21:1.2.6
+          restore-only: true
+
+      - name: Trivy Image Scan that Passes
+        id: trivy-scan
+        uses: telicent-oss/trivy-action@v1
+        with:
+          scan-type: image
+          scan-ref: telicent/telicent-java21:1.2.6
+          scan-name: remote-vex-telicent-java21
+          uses-java: true
+          remote-vex: |
+            telicent-oss/trivy-action@TELDEVOPS-589
+            telicent-oss/trivy-action
+              telicent-oss/no-such-repo    
+
   failing-image-scan:
     runs-on: ubuntu-latest
+    needs: cache-images
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Restore Cached Image
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: telicent/telicent-access-api:1.4.2
+          restore-only: true
         
       - name: Trivy Image Scan that Fails
         id: trivy-scan
