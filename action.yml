@@ -24,6 +24,13 @@ inputs:
     description: |
       Specifies the kind of Trivy scan to perform, one of `image`, `fs` or `sbom`.  Other
       values are not currently supported and will cause the action to fail.
+  remote-vex:
+    required: false
+    default: ""
+    description: |
+      Specifies a new line separated list of remote repositories whose VEX statements should be
+      retrieved via sparse checkout of their .vex/ directory.  These VEX statements will be used 
+      to augment any local VEX statements in the .vex/ directory when scanning for vulnerabilities.
   gh-token:
     required: false
     default: ${{ github.token }}
@@ -141,16 +148,71 @@ runs:
       with:
         vexctl-release: '0.3.0'
 
+    - name: Download Remote VEX Statements
+      if: ${{ inputs.remote-vex != '' }}
+      shell: bash
+      run: |
+        mkdir .remote-vex
+        pushd .remote-vex
+        git init
+        git config core.sparseCheckout true
+        echo ".vex/*" > .git/info/sparse-checkout
+        for REPO in $(echo "${{ inputs.remote-vex }}"); do
+          if [ -z "${REPO}" ]; then
+            continue
+          fi
+
+          git remote add -f origin https://github.com/${REPO}
+          git checkout main
+          if [ -d ".vex/" ]; then
+            mv .vex/* .
+          fi
+          git remote remove origin
+        done
+        popd
+
     # For convenience as there may be many VEX statements present merge them into a single VEX file that we then
     # pass into Trivy by setting the TRIVY_VEX environment variable
     # This also serves to validate that the VEX statements are well formed as this will fail if they are not
     - name: Prepare VEX Statements
+      id: prepare-vex
       shell: bash
       run: |
+        # If local VEX statements exist merge them together
         if [ -d ".vex/" ]; then
-          vexctl merge .vex/* > .merged.openvex.json
-          echo "TRIVY_VEX=.merged.openvex.json" >> $GITHUB_ENV
+          vexctl merge .vex/*.json > .merged.openvex.json
         fi
+        # If any remote VEX statements exist merge them together as well
+        if [ -d ".remote-vex/" ]; then
+          vexctl merge .remote-vex/*.json > .merged.remote.openvex.json
+        fi
+
+        # If both local and remote VEX statements exist merge them together into a final
+        # merged file
+        if [ -f .merged.openvex.json ] && [ -f .merged.remote.openvex.json ]; then
+          mv .merged.openvex.json .merged.local.openvex.json
+          vexctl merge .merged.local.openvex.json .merged.remote.openvex.json > .merged.openvex.json
+        fi
+
+        # Export the TRIVY_VEX environment variable if we have VEX statements available
+        if [ -f .merged.openvex.json ]; then
+          echo "TRIVY_VEX=.merged.openvex.json" >> $GITHUB_ENV
+          echo "prepared=true" >> $GITHUB_OUTPUT
+        else
+          echo "prepared=false" >> $GITHUB_OUTPUT
+        fi
+
+        pwd
+        ls -lah
+
+    - name: Upload VEX Statements (if any)
+      if: ${{ steps.prepare-vex.outputs.prepared == 'true' }}
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        name: ${{ steps.sanitised.outputs.name }}-merged-vex-statements
+        path: .merged.openvex.json
+        retention-days: 30
+        include-hidden-files: true
 
     # Perform a full vulnerability to generate a full vulnerability report
     - name: Trivy Vulnerability Scan
@@ -247,7 +309,8 @@ runs:
       if: ${{ always() }}
       shell: sh
       run: |
-        rm -f .merged.openvex.json
+        rm -f .merged.*
+        rm -Rf .remote-vex/
 
     - name: Cleanup templates/
       if: ${{ always() }}
