@@ -283,9 +283,7 @@ runs:
       uses: actions/checkout@v4
       with:
         repository: telicent-oss/trivy-action
-        # Temporarily changed to test updated report template
-        ref: TELDEVOPS-589
-        #ref: main
+        ref: main
         sparse-checkout: |
           report-template.tpl
         sparse-checkout-cone-mode: false
