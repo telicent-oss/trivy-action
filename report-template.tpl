@@ -42,7 +42,7 @@
         <td>{{ escapeXML .Finding.VulnerabilityID }}</td>
         <td>{{ escapeXML .Finding.Severity }}</td>
         <td>{{ escapeXML .Finding.InstalledVersion }}</td>
-        <td>{{ .Status }} ({{ .Source }})</td>
+        <td><code>{{ .Status }}</code> due to <code>{{ .Statement }}</code> ({{ .Source }})</td>
     </tr>
     {{- end }}
 </table>
