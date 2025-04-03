@@ -13,7 +13,11 @@ jobs:
     strategy:
       matrix:
         image: [ "telicent/telicent-java21:1.2.6", "alpine:latest" ]
+      fail-fast: false
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
         with:
@@ -22,7 +26,7 @@ jobs:
 
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: image
           scan-ref: ${{ matrix.image }}
@@ -32,6 +36,10 @@ jobs:
   good-image-scan:
     runs-on: ubuntu-latest
     steps:
+      # Need to checkout as we need the VEX statements for the scan to pass!
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
         with:
@@ -40,7 +48,7 @@ jobs:
         
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.6
@@ -59,7 +67,7 @@ jobs:
       - name: Trivy Image Scan that Fails
         id: trivy-scan
         continue-on-error: true
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: image
           scan-ref: telicent/telicent-access-api:1.4.2
@@ -80,7 +88,7 @@ jobs:
 
       - name: Trivy Filesystem Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: fs
           scan-ref: .
@@ -111,7 +119,7 @@ jobs:
 
       - name: Trivy SBOM Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: sbom
           scan-ref: cli/cli-debug/target/cli-debug-${{ env.PROJECT_VERSION }}-bom.json
@@ -123,7 +131,7 @@ jobs:
     steps:
       - name: Unsupported Trivy Scan type
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         continue-on-error: true
         with:
           scan-type: foo
@@ -143,7 +151,7 @@ jobs:
 
       - name: Misconfiguration Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         continue-on-error: true
         with:
           scan-type: config
@@ -163,7 +171,7 @@ jobs:
 
       - name: Misconfiguration Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: config
           scan-name: docker-configuration
