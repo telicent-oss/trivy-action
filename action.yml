@@ -36,8 +36,17 @@ inputs:
     default: ${{ github.token }}
     description: |
       A GitHub Token needed to determine the current Trivy database version for caching.
-      Defaults to github.token which is the token for this build, can be overridden if this default token doesn't work
+      Defaults to `github.token` which is the token for this build, can be overridden if this default token doesn't work
       for your build environment.
+  gh-user:
+    required: false
+    default: ${{ github.actor }}
+    description: |
+      A GitHub User to use when cloning remote repositories to retrieve remote VEX statements.
+
+      Defaults to `github.actor` which is the user running the build, can be overridden if this default user does not 
+      match the user who owns the `gh-token` input e.g. if providing a custom GitHub Token to retrieve VEX statements
+      from private repositories.
   uses-java:
     required: false
     default: "false"
@@ -173,10 +182,10 @@ runs:
           fi
 
           # Actually retrieve remote VEX statements
-          # Note the exit 0 to force us to continue even if we get a bad repository reference/branch
-          # In this case we'll hit the else branch and issue a Warning
+          # If a remote reference can't be retrieved then we simply log that
+          # If a remote reference is valid but contains no remote VEX statements then we issue a warning
           echo "Retrieving Remote VEX statements from ${BRANCH} branch of ${REPO}"
-          git remote add -f origin https://github.com/${REPO} || echo "Failed to fetch remote repository ${REPO}"
+          git remote add -f origin https://${{ inputs.gh-user }}:${{ inputs.gh-token }}@github.com/${REPO} || echo "Failed to fetch remote repository ${REPO}"
           git checkout --force ${BRANCH} || echo "Failed to checkout branch ${BRANCH} from remote repository ${REPO}"
           if [ -d ".vex/" ]; then
             mv -fv .vex/*.json . || echo "No remote VEX statements found, they MUST have a .json extension and be in the .vex/ directory of the remote repository"

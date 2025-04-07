@@ -103,7 +103,7 @@ jobs:
 
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@v1
+        uses: telicent-oss/trivy-action@TELDEVOPS-589
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.6
@@ -114,6 +114,8 @@ jobs:
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
             telicent-oss/telicent-base-images
+          gh-user: rvesse
+          gh-token: ${{ secrets.TEST_TOKEN }}
 
   failing-image-scan:
     runs-on: ubuntu-latest
