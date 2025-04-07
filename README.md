@@ -18,7 +18,6 @@ jobs:
   example:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
 
     steps:
@@ -47,6 +46,33 @@ jobs:
 
 In the above example we invoke the action twice, once to do a `fs` scan and another to do an `image` scan.
 
+## GitHub Token Permissions
+
+This action needs a GitHub Token in order to query the GitHub Releases API to discover the release binaries for
+installing the necessary `trivy` and `vexctl` tools.  By default we take the default GitHub Token for the workflow from
+the `github.token` context.  If you have restricted the `permissions` in your Workflow file then you **MAY** need to
+provide a custom token rather than relying on the default.
+
+If your build fails with the following error:
+
+> You need at least read:packages scope to get a package's versions.
+
+Then your token does not have correct permissions, either amend the `permissions` you are requesting for the token in
+your workflow configuration, or use an Actions secret to provide a token for this purpose.
+
+### Permissions for Remote VEX
+
+Also, if you are using the [Remote VEX](#remote-vex-statements) feature then you **MUST** provide a token that has
+permissions to read all the repositories you want to retrieve Remote VEX statements from otherwise some repositories
+**MAY** be ignored, and you **MAY** not get the desired vulnerability suppressions you are expecting.
+
+In this scenario the minimum permissions required for this feature to work correctly are `read:packages` and `repo`, and
+for the `repo` permission it **MUST** pertain to all repositories you wish to access.  This means that the default
+GitHub token permissions are generally **NOT** sufficient to use this feature.
+
+If you provide a custom GitHub token then you **MUST** also customise the `gh-user` input to match the username of the
+user who generated the GitHub token.
+
 ## VEX Support
 
 This action now includes built-in support for processing of Vulnerability Exploitability Exchange (VEX) statements in
@@ -64,6 +90,10 @@ Any vulnerabilities that are suppressed as a result will be displayed in the Git
 Trivy JSON Report:
 
 ![Example Suppressed Vulnerabilities Report](vex-suppression-example.png)
+
+**NB** If you are setting the `allow-unfixed` input to `true` then if a vulnerability is unfixed and has VEX statements
+about it Trivy always ignores it.  Therefore we recommend **NOT** setting `allow-unfixed` unless you absolutely must do
+so.
 
 ### Remote VEX Statements
 
@@ -85,7 +115,6 @@ jobs:
   example:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
 
     steps:
@@ -102,15 +131,26 @@ jobs:
           remote-vex: |
             telicent-oss/telicent-base-images
             telicent-oss/smart-caches-core
+          gh-user: ${{ secrets.REMOTE_VEX_USER }}
+          gh-token: ${{ secrets.REMOTE_VEX_TOKEN }}
 ```
 
 Here we are configuring the action to retrieve remote VEX statements from the `telicent-oss/telicent-base-images` and
 `telicent-oss/smart-caches-core` repositories `main` branches.
 
+Notice that for this to work we need to set the `gh-user` and `gh-token` inputs to custom values, in this example these
+reference some Action secrets that have been created.  The token passed in as the `gh-token` input **MUST** have the
+ability to read the contents of this repository, it **MUST** also have the ability to read packages from repositories as
+the `trivy` and `vexctl` command line tools needed are installed via querying the GitHub Releases API, see [Token
+Permissions](#github-token-permissions) for more information on this.
+
 Note that if any of the specified repositories does not exist, does not have the referenced branch, or no `.vex/`
 directory exists on that branch then a build warning is issued e.g.
 
 ![No Remote VEX Warning example](no-remote-vex-warning.png)
+
+This warning is issued regardless of the reason for failure e.g. bad [Token Permissions](#github-token-permissions), no
+`.vex/` directory in remote repository etc.
 
 # Inputs
 

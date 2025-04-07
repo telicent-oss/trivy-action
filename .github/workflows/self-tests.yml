@@ -114,6 +114,8 @@ jobs:
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
             telicent-oss/telicent-base-images
+          gh-user: rvesse
+          gh-token: ${{ secrets.TEST_TOKEN }}
 
   failing-image-scan:
     runs-on: ubuntu-latest
