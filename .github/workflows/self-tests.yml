@@ -113,6 +113,7 @@ jobs:
             telicent-oss/trivy-action@TELDEVOPS-589
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
+            telicent-oss/telicent-base-images
 
   failing-image-scan:
     runs-on: ubuntu-latest
