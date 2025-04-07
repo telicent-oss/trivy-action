@@ -113,6 +113,7 @@ jobs:
             telicent-oss/trivy-action@TELDEVOPS-589
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
+            telicent-oss/telicent-base-images
 
   failing-image-scan:
     runs-on: ubuntu-latest
@@ -143,6 +144,43 @@ jobs:
         if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
         run: |
           exit 1
+
+  empty-remote-vex:
+    runs-on: ubuntu-latest
+    needs: cache-images
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Restore Cached Image
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: telicent/telicent-access-api:1.4.2
+          restore-only: true
+        
+      - name: Trivy Image Scan that Fails
+        id: trivy-scan
+        continue-on-error: true
+        uses: telicent-oss/trivy-action@v1
+        with:
+          scan-type: image
+          scan-ref: telicent/telicent-access-api:1.4.2
+          scan-name: empty-remote-vex
+          # Intentionally empty whitespace input for remote-vex
+          remote-vex: |
+               
+      - name: Fail if Trivy didn't fail
+        if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
+        run: |
+          exit 1
+
+      - name: Download Scan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.trivy-scan.outputs.scan-results }}
 
   filesystem-scan:
     runs-on: ubuntu-latest

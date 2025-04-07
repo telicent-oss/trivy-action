@@ -179,16 +179,16 @@ runs:
           git remote add -f origin https://github.com/${REPO} || echo "Failed to fetch remote repository ${REPO}"
           git checkout --force ${BRANCH} || echo "Failed to checkout branch ${BRANCH} from remote repository ${REPO}"
           if [ -d ".vex/" ]; then
-            mv -fv .vex/*.json .
+            mv -fv .vex/*.json . || echo "No remote VEX statements found, they MUST have a .json extension and be in the .vex/ directory of the remote repository"
             rm -Rf .vex/
           else
             echo "::warning title=No Remote VEX Statements in ${REPO}::Repository ${REPO} did not contain a .vex/ directory on its ${BRANCH} branch"
           fi
-          git remote remove origin
+          git remote remove origin || echo "No remote origin to remove"
         done
 
         echo "Found the following Remote VEX Statements:"
-        ls -lh *.json
+        ls -lh *.json || echo "No Remote VEX Statements found"
 
         popd
 
@@ -201,11 +201,11 @@ runs:
       run: |
         # If local VEX statements exist merge them together
         if [ -d ".vex/" ]; then
-          vexctl merge .vex/*.json > merged.openvex.json
+          vexctl merge .vex/*.json > merged.openvex.json || rm merged.openvex.json
         fi
         # If any remote VEX statements exist merge them together as well
         if [ -d ".remote-vex/" ]; then
-          vexctl merge .remote-vex/*.json > merged.remote.openvex.json
+          vexctl merge .remote-vex/*.json > merged.remote.openvex.json || rm merged.remote.openvex.json
         fi
 
         # If both local and remote VEX statements exist merge them together into a final
