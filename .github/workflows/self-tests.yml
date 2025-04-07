@@ -103,7 +103,7 @@ jobs:
 
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@TELDEVOPS-589
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.6

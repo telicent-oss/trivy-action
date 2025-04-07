@@ -50,7 +50,8 @@ In the above example we invoke the action twice, once to do a `fs` scan and anot
 
 This action needs a GitHub Token in order to query the GitHub Releases API to discover the release binaries for
 installing the necessary `trivy` and `vexctl` tools.  By default we take the default GitHub Token for the workflow from
-the `github.token` context.  If you have restricted the `permissions` in your Workflow file then you **MAY** need to provide a custom token rather than relying on the default.
+the `github.token` context.  If you have restricted the `permissions` in your Workflow file then you **MAY** need to
+provide a custom token rather than relying on the default.
 
 If your build fails with the following error:
 
@@ -140,7 +141,8 @@ Here we are configuring the action to retrieve remote VEX statements from the `t
 Notice that for this to work we need to set the `gh-user` and `gh-token` inputs to custom values, in this example these
 reference some Action secrets that have been created.  The token passed in as the `gh-token` input **MUST** have the
 ability to read the contents of this repository, it **MUST** also have the ability to read packages from repositories as
-the `trivy` and `vexctl` command line tools needed are installed via querying the GitHub Releases API, see [Token Permissions](#github-token-permissions) for more information on this.
+the `trivy` and `vexctl` command line tools needed are installed via querying the GitHub Releases API, see [Token
+Permissions](#github-token-permissions) for more information on this.
 
 Note that if any of the specified repositories does not exist, does not have the referenced branch, or no `.vex/`
 directory exists on that branch then a build warning is issued e.g.
