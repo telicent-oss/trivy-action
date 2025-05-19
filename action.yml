@@ -203,14 +203,14 @@ runs:
 
     # For convenience as there may be many VEX statements present merge them into a single VEX file that we then
     # pass into Trivy by setting the TRIVY_VEX environment variable
-    # This also serves to validate that all the VEX statements are well formed as this will fail if they are not
+    # This also serves to validate that all the VEX statements are well-formed as this will fail if they are not
     - name: Prepare VEX Statements
       id: prepare-vex
       shell: bash
       run: |
         # If local VEX statements exist merge them together
         if [ -d ".vex/" ]; then
-          vexctl merge .vex/*.json > merged.openvex.json || rm merged.openvex.json
+          vexctl merge .vex/*.json > merged.raw.openvex.json || rm merged.raw.openvex.json
         fi
         # If any remote VEX statements exist merge them together as well
         if [ -d ".remote-vex/" ]; then
@@ -221,11 +221,17 @@ runs:
         # merged file
         # Or if only remote VEX statements exist rename that file, otherwise the next if block
         # where we set TRIVY_VEX won't be triggered
-        if [ -f merged.openvex.json ] && [ -f merged.remote.openvex.json ]; then
+        if [ -f merged.raw.openvex.json ] && [ -f merged.remote.openvex.json ]; then
           mv merged.openvex.json merged.local.openvex.json
-          vexctl merge merged.local.openvex.json merged.remote.openvex.json > merged.openvex.json
+          vexctl merge merged.local.openvex.json merged.remote.openvex.json > merged.raw.openvex.json
         elif [ -f merged.remote.openvex.json ]; then
-          mv merged.remote.openvex.json merged.openvex.json
+          mv merged.remote.openvex.json merged.raw.openvex.json
+        fi
+
+        # Deduplicate entries
+        if [ -f merged.raw.openvex.json ]; then
+          jq '. | .statements |= (unique_by(.vulnerability.name + "-" + (.products | map(.["@id"]) | join(",")))) ' merged.raw.openvex.json > merged.openvex.json 
+          rm merged.raw.openvex.json
         fi
 
         # Export the TRIVY_VEX environment variable if we have VEX statements available
