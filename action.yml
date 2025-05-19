@@ -208,37 +208,50 @@ runs:
       id: prepare-vex
       shell: bash
       run: |
+        handle_error() {
+          echo "Error: $1"
+          exit 1
+        }
+
         # If local VEX statements exist merge them together
         if [ -d ".vex/" ]; then
-          vexctl merge .vex/*.json > merged.raw.openvex.json || rm merged.raw.openvex.json
+          vexctl merge .vex/*.json > merged.raw.openvex.json || handle_error "Failed to merge local VEX files"
+          if [ ! -s "merged.raw.openvex.json" ]; then
+            echo "No local VEX files were merged."
+          fi
         fi
+        
         # If any remote VEX statements exist merge them together as well
         if [ -d ".remote-vex/" ]; then
-          vexctl merge .remote-vex/*.json > merged.remote.openvex.json || rm merged.remote.openvex.json
+          vexctl merge .remote-vex/*.json > merged.remote.openvex.json || handle_error "Failed to merge remote VEX files"
+          if [ ! -s "merged.remote.openvex.json" ]; then
+            echo "No remote VEX files were merged."
+          fi
         fi
-
+        
         # If both local and remote VEX statements exist merge them together into a final
         # merged file
         # Or if only remote VEX statements exist rename that file, otherwise the next if block
         # where we set TRIVY_VEX won't be triggered
         if [ -f merged.raw.openvex.json ] && [ -f merged.remote.openvex.json ]; then
-          mv merged.openvex.json merged.local.openvex.json
-          vexctl merge merged.local.openvex.json merged.remote.openvex.json > merged.raw.openvex.json
+          vexctl merge merged.raw.openvex.json merged.remote.openvex.json > merged.openvex.json || handle_error "Failed to merge local and remote VEX files"
         elif [ -f merged.remote.openvex.json ]; then
-          mv merged.remote.openvex.json merged.raw.openvex.json
+          mv merged.remote.openvex.json merged.openvex.json
+        elif [ -f merged.raw.openvex.json ]; then
+          mv merged.raw.openvex.json merged.openvex.json
         fi
-
+        
         # Deduplicate entries
-        if [ -f merged.raw.openvex.json ]; then
-          jq '. | .statements |= (unique_by(.vulnerability.name + "-" + (.products | map(.["@id"]) | join(",")))) ' merged.raw.openvex.json > merged.openvex.json 
-          rm merged.raw.openvex.json
+        if [ -f merged.openvex.json ]; then
+          jq '. | .statements |= (unique_by(.vulnerability.name + "-" + (.products | map(.["@id"]) | join(",")))) ' merged.openvex.json > temp.openvex.json || handle_error "Failed to deduplicate VEX entries"
+          mv temp.openvex.json merged.openvex.json
         fi
-
+        
         # Export the TRIVY_VEX environment variable if we have VEX statements available
         # We also rename the file at this point to be more descriptive
         if [ -f merged.openvex.json ]; then
-          mv merged.openvex.json ${{ steps.sanitised.outputs.name }}-merged.openvex.json
-          echo "TRIVY_VEX=${{ steps.sanitised.outputs.name }}-merged.openvex.json" >> $GITHUB_ENV
+          mv merged.openvex.json docker-telicent-java21-merged.openvex.json
+          echo "TRIVY_VEX=docker-telicent-java21-merged.openvex.json" >> $GITHUB_ENV
           echo "prepared=true" >> $GITHUB_OUTPUT
         else
           echo "prepared=false" >> $GITHUB_OUTPUT
@@ -274,7 +287,7 @@ runs:
         cache-dir: .trivy
         # We've explicitly called aquasecurity/setup-trivy already, no need for the trivy-action to do this for us
         skip-setup-trivy: true
-        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less 
+        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less
         # flexible way
         cache: false
 
@@ -325,7 +338,7 @@ runs:
         cache-dir: .trivy
         # We've explicitly called aquasecurity/setup-trivy already, no need for the trivy-action to do this for us
         skip-setup-trivy: true
-        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less 
+        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less
         # flexible way
         cache: false
 
