@@ -110,7 +110,7 @@ jobs:
           scan-name: remote-vex-telicent-java21
           uses-java: true
           remote-vex: |
-            telicent-oss/trivy-action@TELDEVOPS-589
+            telicent-oss/trivy-action@deduplicate_vex_entries
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
             telicent-oss/telicent-base-images
