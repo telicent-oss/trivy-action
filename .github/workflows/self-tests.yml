@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.6", "telicent/telicent-access-api:1.4.2" ]
+        image: [ "telicent/telicent-java21:1.2.12", "telicent/telicent-access-api:1.4.2" ]
       fail-fast: true
     steps:
       - name: Cache Images
@@ -26,7 +26,7 @@ jobs:
     needs: cache-images
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.6", "alpine:latest" ]
+        image: [ "telicent/telicent-java21:1.2.12", "alpine:latest" ]
       fail-fast: false
     steps:
       - name: Checkout
@@ -71,7 +71,7 @@ jobs:
       - name: Restore Cached Image
         uses: telicent-oss/docker-image-cache-action@v1
         with:
-          images: telicent/telicent-java21:1.2.6
+          images: telicent/telicent-java21:1.2.12
           restore-only: true
         
       - name: Trivy Image Scan that Passes
@@ -79,7 +79,7 @@ jobs:
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
-          scan-ref: telicent/telicent-java21:1.2.6
+          scan-ref: telicent/telicent-java21:1.2.12
           scan-name: telicent-java21
           uses-java: true
 
@@ -98,7 +98,7 @@ jobs:
       - name: Restore Cached Image
         uses: telicent-oss/docker-image-cache-action@v1
         with:
-          images: telicent/telicent-java21:1.2.6
+          images: telicent/telicent-java21:1.2.12
           restore-only: true
 
       - name: Trivy Image Scan that Passes
@@ -106,7 +106,7 @@ jobs:
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
-          scan-ref: telicent/telicent-java21:1.2.6
+          scan-ref: telicent/telicent-java21:1.2.12
           scan-name: remote-vex-telicent-java21
           uses-java: true
           remote-vex: |
