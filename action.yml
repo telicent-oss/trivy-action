@@ -200,7 +200,7 @@ runs:
 
         # List the Remote VEX statements found, if none found remove the .remote-vex/ directory otherwise the prepare-vex steps fails
         echo "Found the following Remote VEX Statements:"
-        ls -lh .remote-vex/*.json || echo "No Remote VEX Statements found" && rm -Rf .remote-vex/
+        ls -lh .remote-vex/*.json || (echo "No Remote VEX Statements found" && rm -Rf .remote-vex/)
 
 
     # For convenience as there may be many VEX statements present merge them into a single VEX file that we then
@@ -252,8 +252,8 @@ runs:
         # Export the TRIVY_VEX environment variable if we have VEX statements available
         # We also rename the file at this point to be more descriptive
         if [ -f merged.openvex.json ]; then
-          mv merged.openvex.json docker-telicent-java21-merged.openvex.json
-          echo "TRIVY_VEX=docker-telicent-java21-merged.openvex.json" >> $GITHUB_ENV
+          mv merged.openvex.json ${{ steps.sanitised.outputs.name }}-merged.openvex.json
+          echo "TRIVY_VEX=${{ steps.sanitised.outputs.name}}-merged.openvex.json" >> $GITHUB_ENV
           echo "prepared=true" >> $GITHUB_OUTPUT
         else
           echo "prepared=false" >> $GITHUB_OUTPUT
