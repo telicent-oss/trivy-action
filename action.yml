@@ -160,7 +160,7 @@ runs:
     - name: Download Remote VEX Statements
       if: ${{ inputs.remote-vex != '' }}
       shell: bash
-      run: |
+      run: |    
         mkdir .remote-vex
         pushd .remote-vex
         git init -b main
@@ -196,10 +196,12 @@ runs:
           git remote remove origin || echo "No remote origin to remove"
         done
 
-        echo "Found the following Remote VEX Statements:"
-        ls -lh *.json || echo "No Remote VEX Statements found"
-
         popd
+
+        # List the Remote VEX statements found, if none found remove the .remote-vex/ directory otherwise the prepare-vex steps fails
+        echo "Found the following Remote VEX Statements:"
+        ls -lh .remote-vex/*.json || echo "No Remote VEX Statements found" && rm -Rf .remote-vex/
+
 
     # For convenience as there may be many VEX statements present merge them into a single VEX file that we then
     # pass into Trivy by setting the TRIVY_VEX environment variable
