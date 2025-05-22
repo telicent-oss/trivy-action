@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/telicent-base-images
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
@@ -60,6 +62,8 @@ jobs:
       # Need to checkout as we need the VEX statements for the scan to pass!
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/telicent-base-images
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
@@ -113,8 +117,6 @@ jobs:
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
             telicent-oss/telicent-base-images
-          gh-user: rvesse
-          gh-token: ${{ secrets.TEST_TOKEN }}
 
   failing-image-scan:
     runs-on: ubuntu-latest
@@ -322,6 +324,13 @@ jobs:
             ls -la ${RUNNER_TEMP}
             exit 1
           fi
+
+      - name: Add SBOM to Job Summary
+        shell: bash
+        run: |
+          echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
+          cat "${RUNNER_TEMP}/${{ steps.trivy-scan.outputs.sbom-file }}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
     
       - name: Download Generated SBOM Artifact
         uses: actions/download-artifact@v4

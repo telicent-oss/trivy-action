@@ -152,6 +152,50 @@ directory exists on that branch then a build warning is issued e.g.
 This warning is issued regardless of the reason for failure e.g. bad [Token Permissions](#github-token-permissions), no
 `.vex/` directory in remote repository etc.
 
+## Generating a SBOM
+
+Sometimes you may need to have Trivy generate a SBOM for you, perhaps because your toolchain does not support SBOM
+generation natively, or you need to generate a SBOM for a combined product e.g. Docker Image with Application Code.  As
+of `v1.4.0` the optional `output-sbom` input can be used to enable this e.g.
+
+```yaml
+name: Trivy SBOM Generation Example
+on: 
+  push:
+  workflow_dispatch:
+
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      # Normal Job setup steps happen...
+     
+      # Scan and Generate a SBOM
+      - name: Trivy Scan and SBOM Generation
+        id: trivy-scan
+        uses: telicent-oss/trivy-action@v1
+        with:
+          scan-type: image
+          scan-ref: your-repository/your-image:1.2.3
+          scan-name: your-image
+          # Setting any non empty value here will trigger SBOM generation
+          output-sbom: generated
+
+      # Do something with the SBOM e.g.
+      - name: Display Generated SBOM in Job Summary
+        shell: bash
+        run: |
+          echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
+          cat ${RUNNER_TEMP}/${{ steps.trivy-scan.outputs.sbom-file }} >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
+```
+
+The `sbom`, `sbom-file` and `sbom-url` outputs provide details about the generated SBOM.  Within the scope of the
+calling job the SBOM can be accessed via the `RUNNER_TEMP` directory as seen in the above example.
+
 # Inputs
 
 | Input | Required? | Default | Purpose |
@@ -159,6 +203,7 @@ This warning is issued regardless of the reason for failure e.g. bad [Token Perm
 | `scan-type` | Yes | N/A | Specifies the kind of Trivy scan to run, one of `fs`, `image`, `config` or `sbom` |
 | `scan-ref` | Yes | N/A | Specifies what to scan, for `scan-type` of `fs`/`sbom` this is a file system path, for `image` this is a reference to a container image, for `config` this is a reference to a Dockerfile |
 | `scan-name` | Yes | N/A | A unique name (within the calling workflow) for this scan used to disambiguate the scan artifacts when they are attached as artifacts to the build. |
+| `output-sbom` | No | `null` | When specified the action will generate a CycloneDX JSON format SBOM from your scanned artifacts and upload this as an additional build artifact.  The value provided here is used as a prefix to `scan-name` in naming the artifact. |
 | `uses-java` | No | `false` | If your scans involve Java code, whether for `fs` or `image` scans, then set this to `true` to ensure the Trivy Java DB is additionally downloaded and cached |
 | `remote-vex` | No | `null` | If your scans involved building atop of libraries/base images provided in other repositories you can supply one/more references to repositories here from which VEX statements will be retrieved, see [VEX Support](#vex-support). |
 | `allow-unfixed` | No | `false` | Sets the `ignore-unfixed` input passed on to the [`aquasecurity/trivy-action`][1] that controls whether unfixed HIGH/CRITICAL severity vulnerabilities fail the build. |
@@ -171,6 +216,17 @@ This warning is issued regardless of the reason for failure e.g. bad [Token Perm
 | `scan-results` | Name of a GitHub Actions artifact that has been uploaded and contains the full Trivy JSON results. |
 | `scan-results-file` | Name of the Trivy JSON file within the uploaded GitHub Actions artifact. |
 | `scan-results-url` | Full URL to the uploaded artifact. |
+| `sbom` | Name of a GitHub Actions artifact that has been uploaded and contains the Trivy generated CycloneDX format JSON SBOM.  Only populated if `output-sbom` input set to a non-empty value. |
+| `sbom-file` | Name of the Trivy generated CycloneDX JSON format SBOM file within the uploaded GitHub Actions artifact.  Only populated if `output-sbom` input set to a non-empty value. |
+| `sbom-url` | Full URL to the uploaded SBOM artifact.  Only populated if `output-sbom` input set to a non-empty value. |
+
+## Temporary Files
+
+The scan results file, and the generated SBOM (if the `output-sbom` input was set) can be located under the
+`RUNNER_TEMP` directory for the duration of your job if subsequent job steps need to access these files.
+
+The action will additionally use the `.trivy/` directory within your workspace to store the Trivy databases, you **MAY**
+need to remove/ignore this directory if subsequent job steps may be impacted by its presence.
 
 # License
 
