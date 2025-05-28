@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.12", "telicent/telicent-access-api:1.4.2" ]
+        image: [ "telicent/telicent-java21:1.2.12", "telicent/telicent-access-api:1.4.2", "alpine:3.21.3" ]
       fail-fast: true
     steps:
       - name: Cache Images
@@ -26,7 +26,7 @@ jobs:
     needs: cache-images
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.12", "alpine:latest" ]
+        image: [ "telicent/telicent-java21:1.2.12", "alpine:3.21.3" ]
       fail-fast: false
     steps:
       - name: Checkout
@@ -39,7 +39,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Restore Cached Image
-        if: ${{ !contains(matrix.image, ':latest') }}
         uses: telicent-oss/docker-image-cache-action@v1
         with:
           images: ${{ matrix.image }}
