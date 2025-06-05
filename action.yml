@@ -120,8 +120,7 @@ runs:
 
     - name: Download Trivy Java DB
       if: ${{ inputs.uses-java == 'true' && (steps.trivy-cache.outputs.cache-hit == '' || steps.trivy-cache.outputs.cache-hit == 'false') }}
-      #uses: aquasecurity/trivy-action@0.30.0
-      uses: rvesse/trivy-action@fix/overwrite-envs
+      uses: aquasecurity/trivy-action@0.31.0
       env:
         TRIVY_DOWNLOAD_JAVA_DB_ONLY: true
         TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db,ghcr.io/aquasecurity/trivy-java-db:1
@@ -137,8 +136,7 @@ runs:
 
     - name: Download Trivy Vulnerability DB
       if: ${{ steps.trivy-cache.outputs.cache-hit == '' || steps.trivy-cache.outputs.cache-hit == 'false' }}
-      #uses: aquasecurity/trivy-action@0.30.0
-      uses: rvesse/trivy-action@fix/overwrite-envs
+      uses: aquasecurity/trivy-action@0.31.0
       env:
         TRIVY_DOWNLOAD_DB_ONLY: true
         TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db:2
@@ -161,8 +159,7 @@ runs:
 
     # Perform a full vulnerability to generate a full vulnerability report
     - name: Trivy Vulnerability Scan
-      #uses: aquasecurity/trivy-action@0.30.0
-      uses: rvesse/trivy-action@fix/overwrite-envs
+      uses: aquasecurity/trivy-action@0.31.0
       env:
         TRIVY_SKIP_DB_UPDATE: true
         TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -215,8 +212,7 @@ runs:
 
     - name: Fail build on High/Criticial Vulnerabilities
       id: gating-scan
-      #uses: aquasecurity/trivy-action@0.30.0
-      uses: rvesse/trivy-action@fix/overwrite-envs
+      uses: aquasecurity/trivy-action@0.31.0
       env:
         TRIVY_SKIP_DB_UPDATE: true
         TRIVY_SKIP_JAVA_DB_UPDATE: true
