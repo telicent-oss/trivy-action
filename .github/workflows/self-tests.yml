@@ -7,6 +7,10 @@ on:
       - "**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cache-images:
     runs-on: ubuntu-latest
@@ -31,6 +35,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/telicent-base-images
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
@@ -60,6 +66,8 @@ jobs:
       # Need to checkout as we need the VEX statements for the scan to pass!
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/telicent-base-images
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3.3.0
@@ -79,7 +87,7 @@ jobs:
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.12
-          scan-name: telicent-java21
+          scan-name: good-image
           uses-java: true
 
   remote-vex-scan:
@@ -106,15 +114,13 @@ jobs:
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.12
-          scan-name: remote-vex-telicent-java21
+          scan-name: remote-vex
           uses-java: true
           remote-vex: |
             telicent-oss/trivy-action@deduplicate_vex_entries
             telicent-oss/trivy-action
               telicent-oss/no-such-repo    
             telicent-oss/telicent-base-images
-          gh-user: rvesse
-          gh-token: ${{ secrets.TEST_TOKEN }}
 
   failing-image-scan:
     runs-on: ubuntu-latest
@@ -139,7 +145,7 @@ jobs:
         with:
           scan-type: image
           scan-ref: telicent/telicent-access-api:1.4.2
-          scan-name: telicent-access-api
+          scan-name: failing-image
 
       - name: Fail if Trivy didn't fail
         if: ${{ failure() && steps.trivy-scan.outcome != 'failed' }}
@@ -281,4 +287,68 @@ jobs:
           scan-type: config
           scan-name: docker-configuration
           scan-ref: test-data/Dockerfile.good
+
+  generate-sbom:
+    runs-on: ubuntu-latest
+    needs: cache-images
+    steps:
+      # Need to checkout as we need the VEX statements for the scan to pass!
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: telicent-oss/telicent-base-images
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Restore Cached Image
+        uses: telicent-oss/docker-image-cache-action@v1
+        with:
+          images: telicent/telicent-java21:1.2.12
+          restore-only: true
+
+      - name: Trivy Image Scan that generates a SBOM
+        id: trivy-scan
+        uses: telicent-oss/trivy-action@v1
+        with:
+          scan-type: image
+          scan-ref: telicent/telicent-java21:1.2.12
+          scan-name: generate-sbom
+          uses-java: true
+          output-sbom: docker
+
+      - name: Verify SBOM available
+        if: ${{ always() }}
+        run: |
+          if [ ! -f "${RUNNER_TEMP}/${{ steps.trivy-scan.outputs.sbom-file }}" ]; then
+            echo "::error title=Cleanup Failed::Generated SBOM file missing from ${RUNNER_TEMP} directory"
+            ls -la ${RUNNER_TEMP}
+            exit 1
+          fi
+
+      - name: Add SBOM to Job Summary
+        shell: bash
+        run: |
+          echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
+          cat "${RUNNER_TEMP}/${{ steps.trivy-scan.outputs.sbom-file }}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
+    
+      - name: Download Generated SBOM Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.trivy-scan.outputs.sbom }}
+
+      - name: Verify SBOM file now available in workspace directory
+        run: |
+          if [ ! -f "${{ steps.trivy-scan.outputs.sbom-file }}" ]; then
+            echo "::error title=Missing SBOM::SBOM file ${{ steps.trivy-scan.outputs.sbom-file }} not available as expected"
+          fi
+
+      - name: Show Workspace Contents
+        if: ${{ always() }}
+        run: |
+          ls -la
 
