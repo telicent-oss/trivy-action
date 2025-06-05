@@ -7,6 +7,10 @@ on:
       - "**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cache-images:
     runs-on: ubuntu-latest
@@ -48,7 +52,7 @@ jobs:
 
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: ${{ matrix.image }}
@@ -79,7 +83,7 @@ jobs:
         
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.12
@@ -106,7 +110,7 @@ jobs:
 
       - name: Trivy Image Scan that Passes
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.12
@@ -137,7 +141,7 @@ jobs:
       - name: Trivy Image Scan that Fails
         id: trivy-scan
         continue-on-error: true
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: telicent/telicent-access-api:1.4.2
@@ -167,7 +171,7 @@ jobs:
       - name: Trivy Image Scan that Fails
         id: trivy-scan
         continue-on-error: true
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: telicent/telicent-access-api:1.4.2
@@ -195,7 +199,7 @@ jobs:
 
       - name: Trivy Filesystem Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: fs
           scan-ref: .
@@ -226,7 +230,7 @@ jobs:
 
       - name: Trivy SBOM Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: sbom
           scan-ref: cli/cli-debug/target/cli-debug-${{ env.PROJECT_VERSION }}-bom.json
@@ -238,7 +242,7 @@ jobs:
     steps:
       - name: Unsupported Trivy Scan type
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         continue-on-error: true
         with:
           scan-type: foo
@@ -258,7 +262,7 @@ jobs:
 
       - name: Misconfiguration Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         continue-on-error: true
         with:
           scan-type: config
@@ -278,7 +282,7 @@ jobs:
 
       - name: Misconfiguration Scan
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: config
           scan-name: docker-configuration
@@ -308,7 +312,7 @@ jobs:
 
       - name: Trivy Image Scan that generates a SBOM
         id: trivy-scan
-        uses: telicent-oss/trivy-action@generate-sbom
+        uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
           scan-ref: telicent/telicent-java21:1.2.12

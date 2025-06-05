@@ -187,6 +187,8 @@ jobs:
       # Do something with the SBOM e.g.
       - name: Display Generated SBOM in Job Summary
         shell: bash
+        # Note that ` is a special character in bash so need to escape it when we want to output Markdown code fence
+        # to the step summary file
         run: |
           echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
           cat ${RUNNER_TEMP}/${{ steps.trivy-scan.outputs.sbom-file }} >> "${GITHUB_STEP_SUMMARY}"
