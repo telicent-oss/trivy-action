@@ -185,7 +185,7 @@ jobs:
           exit 1
 
       - name: Download Scan Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ steps.trivy-scan.outputs.scan-results }}
 
@@ -337,7 +337,7 @@ jobs:
           echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
     
       - name: Download Generated SBOM Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ steps.trivy-scan.outputs.sbom }}
 
