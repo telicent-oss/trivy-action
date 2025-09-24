@@ -141,7 +141,7 @@ runs:
 
     - name: Trivy Cache
       id: trivy-cache
-      uses: yogeshlonkar/trivy-cache-action@3eda36a23c102481fd8813f03eae09a91f2e8fab
+      uses: yogeshlonkar/trivy-cache-action@5f355ec5767e3212a19dc0f5f60933ecaa7dcd90
       with:
         gh-token: ${{ inputs.gh-token }}
         prefix: ${{ github.workflow }}-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}
