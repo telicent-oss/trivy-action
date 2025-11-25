@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: telicent-oss/telicent-base-images
 
@@ -65,7 +65,7 @@ jobs:
     steps:
       # Need to checkout as we need the VEX statements for the scan to pass!
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: telicent-oss/telicent-base-images
 
@@ -193,7 +193,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: telicent-oss/smart-caches-core
 
@@ -210,7 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: telicent-oss/smart-caches-core
 
@@ -258,7 +258,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Misconfiguration Scan
         id: trivy-scan
@@ -278,7 +278,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Misconfiguration Scan
         id: trivy-scan
@@ -294,7 +294,7 @@ jobs:
     steps:
       # Need to checkout as we need the VEX statements for the scan to pass!
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: telicent-oss/telicent-base-images
 
