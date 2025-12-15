@@ -214,7 +214,7 @@ runs:
 
     - name: Upload Vulnerability Scan Results
       id: upload-scan-results
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: ${{ steps.sanitised.outputs.name }}-trivy-report
         path: ${{ runner.temp }}/${{ steps.sanitised.outputs.name }}-trivy-report.json
@@ -242,7 +242,7 @@ runs:
     - name: Upload Generated SBOM
       id: upload-sbom
       if: ${{ inputs.output-sbom != '' }}
-      uses: actions/upload-artifact@v5.0.0
+      uses: actions/upload-artifact@v6.0.0
       with:
         name: ${{ steps.sanitised.outputs.name }}-cyclonedx-sbom
         path: ${{ runner.temp }}/${{ inputs.output-sbom}}-${{ steps.sanitised.outputs.name }}-cyclonedx.sbom.json
