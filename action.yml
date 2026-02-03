@@ -136,7 +136,7 @@ runs:
     - name: Setup Trivy
       uses: aquasecurity/setup-trivy@v0.2.5
       with:
-        version: v0.67.2
+        version: v0.69.0
         cache: true
 
     - name: Trivy Cache
