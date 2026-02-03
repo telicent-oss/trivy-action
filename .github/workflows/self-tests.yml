@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.12", "telicent/telicent-access-api:1.4.2", "alpine:3.21.3" ]
+        image: [ "telicent/telicent-java21:latest", "telicent/telicent-access-api:1.4.2", "alpine:3.21.3" ]
       fail-fast: true
     steps:
       - name: Cache Images
@@ -30,7 +30,7 @@ jobs:
     needs: cache-images
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.12", "alpine:3.21.3" ]
+        image: [ "telicent/telicent-java21:latest", "alpine:3.21.3" ]
       fail-fast: false
     steps:
       - name: Checkout
@@ -78,7 +78,7 @@ jobs:
       - name: Restore Cached Image
         uses: telicent-oss/docker-image-cache-action@v1
         with:
-          images: telicent/telicent-java21:1.2.12
+          images: telicent/telicent-java21:latest
           restore-only: true
         
       - name: Trivy Image Scan that Passes
@@ -86,7 +86,7 @@ jobs:
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
-          scan-ref: telicent/telicent-java21:1.2.12
+          scan-ref: telicent/telicent-java21:latest
           scan-name: good-image
           uses-java: true
 
@@ -105,7 +105,7 @@ jobs:
       - name: Restore Cached Image
         uses: telicent-oss/docker-image-cache-action@v1
         with:
-          images: telicent/telicent-java21:1.2.12
+          images: telicent/telicent-java21:latest
           restore-only: true
 
       - name: Trivy Image Scan that Passes
@@ -113,7 +113,7 @@ jobs:
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
-          scan-ref: telicent/telicent-java21:1.2.12
+          scan-ref: telicent/telicent-java21:latest
           scan-name: remote-vex
           uses-java: true
           remote-vex: |
@@ -307,7 +307,7 @@ jobs:
       - name: Restore Cached Image
         uses: telicent-oss/docker-image-cache-action@v1
         with:
-          images: telicent/telicent-java21:1.2.12
+          images: telicent/telicent-java21:latest
           restore-only: true
 
       - name: Trivy Image Scan that generates a SBOM
@@ -315,7 +315,7 @@ jobs:
         uses: telicent-oss/trivy-action@v1
         with:
           scan-type: image
-          scan-ref: telicent/telicent-java21:1.2.12
+          scan-ref: telicent/telicent-java21:latest
           scan-name: generate-sbom
           uses-java: true
           output-sbom: docker
