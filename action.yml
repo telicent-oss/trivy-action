@@ -3,8 +3,8 @@ description: |
   This action scans a filesystem/SBOM/Container Image using Trivy
 author: Telicent
 branding:
-  icon: 'lock'
-  color: 'green'
+  icon: "lock"
+  color: "green"
 inputs:
   scan-ref:
     required: true
@@ -106,7 +106,7 @@ runs:
   using: "composite"
   steps:
     - name: Fail on Unsupported Scan Type
-      # NB - Can't have an array literal directly in an Actions expression, but can use fromJSON() function 
+      # NB - Can't have an array literal directly in an Actions expression, but can use fromJSON() function
       #      to parse an array literal on the fly, go figure!
       #      See https://github.com/orgs/community/discussions/27223
       if: ${{ !contains(fromJSON('[ "image", "fs", "sbom", "config" ]'), inputs.scan-type) }}
@@ -119,12 +119,12 @@ runs:
     # to remove characters that are disallowed, or would cause those usages to break
     #
     # For GitHub Actions Artifacts this is as follows:
-    # 
-    # Double quote ", Colon :, Less than <, Greater than >, Vertical bar |, Asterisk *, Question mark ?, Carriage 
+    #
+    # Double quote ", Colon :, Less than <, Greater than >, Vertical bar |, Asterisk *, Question mark ?, Carriage
     # return \r, Line feed \n, Backslash \, Forward slash /
     #
-    # These characters are not allowed in the artifact name due to limitations with certain file systems such as NTFS. 
-    # To maintain file system agnostic behavior, these characters are intentionally not allowed to prevent potential 
+    # These characters are not allowed in the artifact name due to limitations with certain file systems such as NTFS.
+    # To maintain file system agnostic behavior, these characters are intentionally not allowed to prevent potential
     # problems with downloads on different file systems.
 
     - name: Sanitise Scan name
@@ -139,12 +139,12 @@ runs:
         version: v0.69.3
         cache: true
 
-    - name: Trivy Cache
-      id: trivy-cache
-      uses: yogeshlonkar/trivy-cache-action@ed5a0132284e2c2d52921949acf5753cce4b6a2b
-      with:
-        gh-token: ${{ inputs.gh-token }}
-        prefix: ${{ github.workflow }}-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}
+    #    - name: Trivy Cache
+    #      id: trivy-cache
+    #      uses: yogeshlonkar/trivy-cache-action@ed5a0132284e2c2d52921949acf5753cce4b6a2b
+    #      with:
+    #        gh-token: ${{ inputs.gh-token }}
+    #        prefix: ${{ github.workflow }}-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}
 
     - name: Download Trivy Java DB
       if: ${{ inputs.uses-java == 'true' && (steps.trivy-cache.outputs.cache-hit == '' || steps.trivy-cache.outputs.cache-hit == 'false') }}
@@ -158,7 +158,7 @@ runs:
         cache-dir: .trivy
         # We've explicitly called aquasecurity/setup-trivy already, no need for the trivy-action to do this for us
         skip-setup-trivy: true
-        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less 
+        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less
         # flexible way
         cache: false
 
@@ -174,7 +174,7 @@ runs:
         cache-dir: .trivy
         # We've explicitly called aquasecurity/setup-trivy already, no need for the trivy-action to do this for us
         skip-setup-trivy: true
-        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less 
+        # Counter-intuitive BUT trivy-action has its own cache behaviour which duplicates our own but in a less
         # flexible way
         cache: false
 
