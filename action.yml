@@ -139,12 +139,14 @@ runs:
         version: v0.69.3
         cache: true
 
-    #    - name: Trivy Cache
-    #      id: trivy-cache
-    #      uses: yogeshlonkar/trivy-cache-action@ed5a0132284e2c2d52921949acf5753cce4b6a2b
-    #      with:
-    #        gh-token: ${{ inputs.gh-token }}
-    #        prefix: ${{ github.workflow }}-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}
+    - name: Restore Trivy DB Cache
+      id: trivy-cache
+      uses: actions/cache@v4
+      with:
+        path: .trivy
+        key: trivy-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}-${{ github.run_id }}
+        restore-keys: |
+          trivy-${{ inputs.uses-java == 'true' && 'java' || 'no-java' }}-
 
     - name: Download Trivy Java DB
       if: ${{ inputs.uses-java == 'true' && (steps.trivy-cache.outputs.cache-hit == '' || steps.trivy-cache.outputs.cache-hit == 'false') }}
