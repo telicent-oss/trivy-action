@@ -134,7 +134,7 @@ runs:
         echo "name=$(echo '${{ inputs.scan-name }}' | sed 's/[:/<>|*?\]/-/g' | tr -s '-')" >> $GITHUB_OUTPUT
 
     - name: Setup Trivy
-      uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514
+      uses: aquasecurity/setup-trivy@151a37f29c09e4ff49f853d2b23682e688bb1fa1
       with:
         version: v0.69.3
         cache: true
