@@ -46,6 +46,7 @@ jobs:
 
       - name: Restore Cached Image
         uses: telicent-oss/docker-image-cache-action@v1
+        if: ${{ ! contains(matrix.image, ':latest') }}
         with:
           images: ${{ matrix.image }}
           restore-only: true
