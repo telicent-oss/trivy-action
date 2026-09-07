@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.61", "telicent/telicent-access-api:1.4.2", "alpine:3.24.1" ]
+        image: [ "telicent/telicent-java21:1.2.61", "telicent/telicent-access-api:1.4.2" ]
       fail-fast: true
     steps:
       - name: Cache Images
@@ -30,7 +30,7 @@ jobs:
     needs: cache-images
     strategy:
       matrix:
-        image: [ "telicent/telicent-java21:1.2.61", "alpine:3.24.1" ]
+        image: [ "telicent/telicent-java21:1.2.61", "alpine:latest" ]
       fail-fast: false
     steps:
       - name: Checkout
